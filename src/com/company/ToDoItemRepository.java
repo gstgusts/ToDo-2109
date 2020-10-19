@@ -74,6 +74,38 @@ public class ToDoItemRepository {
         return null;
     }
 
+    public int addToDo(ToDo item) {
+        try {
+            connection = DriverManager.getConnection(connectionUrl, userName, password);
+            var stm = connection.prepareCall("{call spAddToDo(?,?,?,?,?,?,?)}");
+            stm.setString("name", item.getName());
+            stm.setBoolean("is_done", item.isDone());
+            stm.setTimestamp("due_date", getTimeStamp(item.getDueDate()));
+            stm.setTimestamp("finished_date", getTimeStamp(item.getFinishedDate()));
+            stm.setString("description", item.getDescription());
+            stm.setBoolean("is_important", item.isImportant());
+
+            stm.registerOutParameter("id", Types.INTEGER);
+
+            stm.executeUpdate();
+
+            return stm.getInt("id");
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private Timestamp getTimeStamp(LocalDateTime dateTime) {
+        if(dateTime == null) {
+            return null;
+        }
+
+        return Timestamp.valueOf(dateTime);
+    }
+
     private PreparedStatement getPreparedStatement(String sqlText) throws SQLException {
         connection = DriverManager.getConnection(connectionUrl, userName, password);
         return connection.prepareStatement(sqlText);
