@@ -76,7 +76,7 @@ public class ToDoItemRepository {
 
     public int addToDo(ToDo item) {
         try {
-            connection = DriverManager.getConnection(connectionUrl, userName, password);
+            connection = getConnection();
             var stm = connection.prepareCall("{call spAddToDo(?,?,?,?,?,?,?)}");
             stm.setString("name", item.getName());
             stm.setBoolean("is_done", item.isDone());
@@ -98,6 +98,42 @@ public class ToDoItemRepository {
         return 0;
     }
 
+    public boolean deleteToDo(int id) {
+        try {
+            connection = getConnection();
+            var stm = connection.prepareCall("{call spDeleteToDo(?)}");
+            stm.setInt("id", id);
+
+            return stm.executeUpdate() == 1;
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean updateToDo(ToDo item) {
+        try {
+            connection = getConnection();
+            var stm = connection.prepareCall("{call spUpdateToDo(?,?,?,?,?,?,?)}");
+            stm.setInt("id", item.getId());
+            stm.setString("name", item.getName());
+            stm.setBoolean("is_done", item.isDone());
+            stm.setTimestamp("due_date", getTimeStamp(item.getDueDate()));
+            stm.setTimestamp("finished_date", getTimeStamp(item.getFinishedDate()));
+            stm.setString("description", item.getDescription());
+            stm.setBoolean("is_important", item.isImportant());
+
+            return stm.executeUpdate() == 1;
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
+        return false;
+    }
+
     private Timestamp getTimeStamp(LocalDateTime dateTime) {
         if(dateTime == null) {
             return null;
@@ -106,8 +142,12 @@ public class ToDoItemRepository {
         return Timestamp.valueOf(dateTime);
     }
 
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(connectionUrl, userName, password);
+    }
+
     private PreparedStatement getPreparedStatement(String sqlText) throws SQLException {
-        connection = DriverManager.getConnection(connectionUrl, userName, password);
+        connection = getConnection();
         return connection.prepareStatement(sqlText);
     }
 
