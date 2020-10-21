@@ -134,6 +134,21 @@ public class ToDoItemRepository {
         return false;
     }
 
+    public boolean markToDoAsDone(int id) {
+        try {
+            connection = getConnection();
+            var stm = connection.prepareCall("{call spMarkToDoAsDone(?)}");
+            stm.setInt("id", id);
+
+            return stm.executeUpdate() == 1;
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
+        return false;
+    }
+
     private Timestamp getTimeStamp(LocalDateTime dateTime) {
         if(dateTime == null) {
             return null;
