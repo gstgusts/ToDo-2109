@@ -12,13 +12,22 @@ public class ToDoItemRepository {
     private static final String userName = "todo";
     private static final String password = "todo123";
 
+    private int userId;
+
     private Connection connection;
 
+    public ToDoItemRepository(int userId) {
+        this.userId = userId;
+    }
+
     public List<ToDo> getAllImportantItems() {
-        var sqlText = "SELECT * FROM todo.todo_items where ti_is_important = 1 and ti_is_done = 0";
+        var sqlText = "SELECT * FROM todo.v_todo_items_with_user where ti_is_important = 1 and ti_is_done = 0 and user_id = ?";
 
         try {
             var ps = getPreparedStatement(sqlText);
+
+            ps.setInt(1, userId);
+
             return getItems(ps);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -35,7 +44,7 @@ public class ToDoItemRepository {
     }
 
     public List<ToDo> getAllItemsForDay(LocalDateTime from, LocalDateTime to) {
-        var sqlText = "select * from todo.todo_items where ti_is_done = 0 and (ti_due_date between ? and ?)";
+        var sqlText = "select * from todo.v_todo_items_with_user where ti_is_done = 0 and (ti_due_date between ? and ?) and user_id = ?";
 
         List<ToDo> ps = getItems(from, to, sqlText);
         if (ps != null) return ps;
@@ -50,7 +59,7 @@ public class ToDoItemRepository {
     public List<ToDo> getDoneItemsForLast7Days(LocalDateTime to) {
 
         var from = to.minusDays(7);
-        var sqlText = "select * from todo.todo_items where ti_is_done = 1 and (ti_finished_date between ? and ?)";
+        var sqlText = "select * from todo.v_todo_items_with_user where ti_is_done = 1 and (ti_finished_date between ? and ?) and user_id = ?";
 
         List<ToDo> ps = getItems(from, to, sqlText);
         if (ps != null) return ps;
@@ -60,7 +69,7 @@ public class ToDoItemRepository {
 
     public ToDo getById(int id) {
 
-        var sqlText = "select * from todo.todo_items where ti_id = ?";
+        var sqlText = "select * from todo.v_todo_items_with_user where ti_id = ?";
 
         try {
             var ps = getPreparedStatement(sqlText);
@@ -77,13 +86,14 @@ public class ToDoItemRepository {
     public int addToDo(ToDo item) {
         try {
             connection = getConnection();
-            var stm = connection.prepareCall("{call spAddToDo(?,?,?,?,?,?,?)}");
+            var stm = connection.prepareCall("{call spAddToDo(?,?,?,?,?,?,?,?)}");
             stm.setString("name", item.getName());
             stm.setBoolean("is_done", item.isDone());
             stm.setTimestamp("due_date", getTimeStamp(item.getDueDate()));
             stm.setTimestamp("finished_date", getTimeStamp(item.getFinishedDate()));
             stm.setString("description", item.getDescription());
             stm.setBoolean("is_important", item.isImportant());
+            stm.setInt("user_id", item.getOwner().getId());
 
             stm.registerOutParameter("id", Types.INTEGER);
 
@@ -190,6 +200,7 @@ public class ToDoItemRepository {
 
             ps.setTimestamp(1, Timestamp.valueOf(from));
             ps.setTimestamp(2, Timestamp.valueOf(to));
+            ps.setInt(3, userId);
 
             return getItems(ps);
 

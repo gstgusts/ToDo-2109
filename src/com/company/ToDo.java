@@ -13,8 +13,9 @@ public class ToDo {
     private LocalDateTime finishedDate;
     private String description;
     private boolean isImportant;
+    private User owner;
 
-    public ToDo(int id, String name, boolean isDone, LocalDateTime dueDate, LocalDateTime finishedDate, String description, boolean isImportant) {
+    public ToDo(int id, String name, boolean isDone, LocalDateTime dueDate, LocalDateTime finishedDate, String description, boolean isImportant, User owner) {
         this.id = id;
         this.name = name;
         this.isDone = isDone;
@@ -22,6 +23,7 @@ public class ToDo {
         this.finishedDate = finishedDate;
         this.description = description;
         this.isImportant = isImportant;
+        this.owner = owner;
     }
 
     public int getId() {
@@ -88,7 +90,8 @@ public class ToDo {
                     getLocalDateTime(rs.getTimestamp("ti_due_date")),
                     getLocalDateTime(rs.getTimestamp("ti_finished_date")),
                     rs.getString("ti_description"),
-                    rs.getBoolean("ti_is_important")
+                    rs.getBoolean("ti_is_important"),
+                    User.create(rs)
                     );
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -103,5 +106,13 @@ public class ToDo {
         }
 
         return null;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 }
