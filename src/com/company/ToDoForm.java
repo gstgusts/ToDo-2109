@@ -5,12 +5,15 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class ToDoForm extends JFrame {
 
     JPanel mainPanel;
     JPanel buttonPanel;
     JButton btnLoadImportant;
+    JButton btnLoadToday;
 
     ToDoItemRepository repo;
 
@@ -38,6 +41,7 @@ public class ToDoForm extends JFrame {
 
     public void open() {
         initUi();
+        getAllImportantItems();
         this.setVisible(true);
     }
 
@@ -51,21 +55,17 @@ public class ToDoForm extends JFrame {
 
         btnLoadImportant = new JButton("Important");
         btnLoadImportant.addActionListener(e -> {
-             var items = repo.getAllImportantItems();
-
-             var data = new Object[items.size()][2];
-
-            for (int i = 0; i < items.size(); i++) {
-                data[i][0] = items.get(i).getName();
-                data[i][1] = items.get(i).isDone();
-            }
-
-            DefaultTableModel model = new DefaultTableModel(data, columns);
-            dataTable.setModel(model);
-
+            getAllImportantItems();
         });
 
         buttonPanel.add(btnLoadImportant);
+
+        btnLoadToday = new JButton("Today");
+        btnLoadToday.addActionListener(e->{
+           getAllItemsForDay();
+        });
+
+        buttonPanel.add(btnLoadToday);
 
         scrollPane = new JScrollPane();
         scrollPane.setBounds(0, 50, 300, 550);
@@ -76,5 +76,29 @@ public class ToDoForm extends JFrame {
         dataTable = new JTable(data, columns);
 
         scrollPane.setViewportView(dataTable);
+    }
+
+    private void getAllImportantItems() {
+        bindDataToTable(repo.getAllImportantItems());
+    }
+
+    private void getAllItemsForDay() {
+        bindDataToTable(repo.getAllItemsForDay());
+    }
+
+    private void getAllItemsForDay(LocalDateTime from, LocalDateTime to) {
+        bindDataToTable(repo.getAllItemsForDay(from, to));
+    }
+
+    private void bindDataToTable(List<ToDo> items) {
+        var data = new Object[items.size()][2];
+
+        for (int i = 0; i < items.size(); i++) {
+            data[i][0] = items.get(i).getName();
+            data[i][1] = items.get(i).isDone();
+        }
+
+        DefaultTableModel model = new DefaultTableModel(data, columns);
+        dataTable.setModel(model);
     }
 }
